@@ -58,6 +58,9 @@ export default function MobileMenu({ isMobileMenu, handleMobileMenu }: MobileMen
                                         <li>
                                             <Link href="/login">login</Link>
                                         </li>
+                                        <li>
+                                            <Link href="/PNotification">Push Notification</Link>
+                                        </li>
                                     </ul>
                                 </nav>
                             </div>

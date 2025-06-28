@@ -70,8 +70,8 @@ export default function RootLayout({
                 <title>AstraX AI Solutions</title>
             </head>
             <body>
-                <PushNotificationManager />
-                {/*<SendNotificationButton></SendNotificationButton> */}
+                {/*<PushNotificationManager />
+               <SendNotificationButton></SendNotificationButton> */}
                 {children}
             </body>
         </html>
