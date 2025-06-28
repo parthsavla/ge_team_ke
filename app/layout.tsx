@@ -18,6 +18,7 @@ import type { Metadata, Viewport } from 'next';
 import InstallPrompt from './InstallPrompt';
 import PushNotificationManager from '@/components/PushNotificationManager';
 import SendNotificationButton from '@/components/SendNotificationButton';
+import Providers from './providers';
 
 const LibreFranklinHeading = Libre_Franklin({
     weight: ['300', '400', '500', '600', '700'],
@@ -72,7 +73,10 @@ export default function RootLayout({
             <body>
                 {/*<PushNotificationManager />
                <SendNotificationButton></SendNotificationButton> */}
-                {children}
+                <Providers>
+                    {children}
+
+                </Providers>
             </body>
         </html>
     );

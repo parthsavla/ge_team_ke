@@ -1,39 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Datasource definition: Specifies the database type and connection URL.
+// In a Next.js app, you'd typically load DATABASE_URL from environment variables.
+datasource db {
+  provider = "mysql" // Or "mysql", "sqlite", "sqlserver", "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// Generator definition: Configures Prisma Client.
+// `next-auth` requires a specific adapter, which implies a Prisma client.
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+// ================================================================
+// Enums
+// ================================================================
+
+// Defines the roles a user can have in the application.
+enum UserRole {
+  NORMAL      // Can view schedule and receive updates
+  PARTICIPANT // Can view their own schedule, whole schedule
+  ADMIN       // Can push custom updates, upload results
 }
 
+// ================================================================
+// Models
+// ================================================================
+
+// User Model: Stores core user information and their role.
+// This model will typically be populated/updated after successful authentication
+// (e.g., via NextAuth.js).
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String           @id @default(cuid()) // Unique ID for the user
+  email            String           @unique              // User's email, must be unique
+  name             String?                               // User's name (optional, from Google/etc.)
+  image            String?                               // User's profile picture URL (optional, from Google/etc.)
+  emailVerified    DateTime?                             // Timestamp when email was verified (for email links)
+  role             UserRole         @default(NORMAL)     // User's role in the application
 
-  accounts Account[] // ✅ relation
-  sessions Session[] // ✅ relation
+  // Relations:
+  participations   Participation[]                      // Link to specific participations in events
+  adminNotifications Notification[] @relation("AdminNotifications") // Notifications pushed by this admin
+  adminResults     Result[]         @relation("AdminResults")     // Results uploaded by this admin
+
+  // For NextAuth.js integration (if using a Prisma adapter)
+  accounts         Account[]
+  sessions         Session[]
 }
+
+// Event Model: Represents a distinct sports event.
+model Event {
+  id            String         @id @default(cuid()) // Unique ID for the event
+  name          String                               // Name of the event (e.g., "Football Tournament")
+  description   String?                              // Optional description of the event
+  date          DateTime                             // Date of the event
+  location      String                               // Venue or location of the event
+
+  // Relations:
+  scheduleItems ScheduleItem[]                       // Schedule entries for this event
+  results       Result[]                             // Results associated with this event
+}
+
+// ScheduleItem Model: Represents a specific activity or slot within an event's schedule.
+model ScheduleItem {
+  id           String        @id @default(cuid()) // Unique ID for the schedule item
+  eventId      String                             // Foreign key to the associated Event
+  event        Event         @relation(fields: [eventId], references: [id])
+  startTime    DateTime                           // Start time of the activity
+  endTime      DateTime                           // End time of the activity
+  activity     String                             // Description of the activity (e.g., "Group Stage Match 1", "Registration")
+  pitchNumber  Int?                               // Optional: specific pitch/court number
+
+  // Relations:
+  participants Participation[]                    // Participants assigned to this specific schedule item
+}
+
+// Participant Model: Represents an individual or team participating in a specific schedule item.
+// A user can be a participant, but not all participants need to be registered users.
+model Participation {
+  id             String       @id @default(cuid()) // Unique ID for the participation entry
+  userId         String?                          // Optional: Foreign key to the User model if the participant is a registered user
+  user           User?        @relation(fields: [userId], references: [id])
+  name           String                           // Name of the participant/team (required, even if no userId)
+  contactEmail   String?                          // Optional contact email for the participant/team
+  teamName       String?                          // Optional: name of the team if applicable
+
+  scheduleItemId String                           // Foreign key to the associated ScheduleItem
+  scheduleItem   ScheduleItem @relation(fields: [scheduleItemId], references: [id])
+
+  @@unique([scheduleItemId, userId], name: "unique_participant_schedule") // Ensures a user participates only once per schedule item
+  @@unique([scheduleItemId, name], name: "unique_team_schedule") // Ensures a team participates only once per schedule item (if userId is null)
+}
+
+
+// Notification Model: Stores updates/messages pushed by admins.
+model Notification {
+  id           String    @id @default(cuid()) // Unique ID for the notification
+  title        String                         // Title of the notification
+  message      String                         // Content of the notification
+  createdAt    DateTime  @default(now())      // Timestamp when the notification was created
+
+  sentByAdminId String                        // Foreign key to the Admin who sent this notification
+  sentByAdmin   User      @relation("AdminNotifications", fields: [sentByAdminId], references: [id])
+
+  targetRole   UserRole?                      // Optional: If set, targets notifications to a specific role (e.g., PARTICIPANT)
+}
+
+// Result Model: Stores the outcomes of events or matches.
+model Result {
+  id              String    @id @default(cuid()) // Unique ID for the result entry
+  eventId         String                         // Foreign key to the associated Event
+  event           Event     @relation(fields: [eventId], references: [id])
+  description     String                         // Description of the result (e.g., "Team A vs Team B: 3-1")
+  score           String?                        // Optional: detailed score if applicable
+  recordedAt      DateTime  @default(now())      // Timestamp when the result was recorded
+
+  recordedByAdminId String                        // Foreign key to the Admin who recorded this result
+  recordedByAdmin   User      @relation("AdminResults", fields: [recordedByAdminId], references: [id])
+}
+
+// ================================================================
+// NextAuth.js Integration Models (Standard if using Prisma Adapter)
+// ================================================================
+// These models are typically required when you use NextAuth.js with a Prisma adapter
+// to manage sessions and accounts. You usually don't interact with these directly
+// in your application logic.
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -43,8 +152,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
