@@ -22,7 +22,7 @@ export default function Header({ scroll, isMobileMenu, handleMobileMenu }: any) 
                                 </svg>
                             </Link>
 
-
+                            <img src="\assets\bell_logo.png" style={{ width: 16 }}></img>
                             <div className="burger-icon burger-icon-white border rounded-3 top-0 end-0" onClick={handleMobileMenu}>
                                 <span className="burger-icon-top" />
                                 <span className="burger-icon-mid" />

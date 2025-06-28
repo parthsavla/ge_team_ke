@@ -18,7 +18,6 @@ import type { Metadata, Viewport } from 'next';
 import InstallPrompt from './InstallPrompt';
 import PushNotificationManager from '@/components/PushNotificationManager';
 import SendNotificationButton from '@/components/SendNotificationButton';
-import Providers from './providers';
 
 const LibreFranklinHeading = Libre_Franklin({
     weight: ['300', '400', '500', '600', '700'],
@@ -66,16 +65,14 @@ export default function RootLayout({
                 <meta name="format-detection" content="telephone=no" />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="theme-color" content="#000000" />
+                <link rel="manifest" href="/manifest.json" />
                 <link rel="apple-touch-icon" href="/icons/icon-192x192.png"></link>
                 <title>AstraX AI Solutions</title>
             </head>
             <body>
-                <Providers>
-                    <PushNotificationManager />
-                    {/*<SendNotificationButton></SendNotificationButton> */}
-                    {children}
-                </Providers>
-
+                <PushNotificationManager />
+                {/*<SendNotificationButton></SendNotificationButton> */}
+                {children}
             </body>
         </html>
     );
