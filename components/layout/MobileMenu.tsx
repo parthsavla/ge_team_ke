@@ -61,6 +61,9 @@ export default function MobileMenu({ isMobileMenu, handleMobileMenu }: MobileMen
                                         <li>
                                             <Link href="/PNotification">Push Notification</Link>
                                         </li>
+                                        <li>
+                                            <Link href="/PNotification">Upload results</Link>
+                                        </li>
                                     </ul>
                                 </nav>
                             </div>
